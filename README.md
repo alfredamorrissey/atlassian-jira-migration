@@ -27,7 +27,8 @@ This script automates the migration of issues from a source Jira project to a ta
 Clone the repository, change into the root folder of the project, and install the dependencies.
 
 ```bash
-git clone 
+git clone git@github.com:alfredamorrissey/atlassian-jira-migration.git
+cd atlassian-jira-migration
 composer install
 ```
 ---
