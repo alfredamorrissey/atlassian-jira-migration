@@ -196,45 +196,6 @@ Documentation: [Jira Workflow Documentation](https://support.atlassian.com/jira-
   ```  
   ---
 
-## 💡 Usage Examples
-
-### Example: Create a Single Issue
-
-```php
-$issue = [
-  'fields' => [
-    'summary' => 'Example issue',
-    'description' => 'Created via script.',
-    'issuetype' => ['name' => 'Task'],
-    'components' => [['name' => 'Backend']],
-    'priority' => ['name' => 'High']
-  ],
-  'key' => 'SRC-123'
-];
-
-$customFields = [
-  'Consortium Jira ID' => '12345',
-  'Components' => '12346',
-];
-
-$headers = [
-  'Authorization: Basic ' . base64_encode("your_email:your_token"),
-  'Content-Type: application/json'
-];
-
-createIssue($issue, 'your-domain.atlassian.net', 'TARGET', $customFields, $headers);
-```
-
-### Example: Update an Existing Issue
-
-```php
-updateIssue('TARGET-456', $issue, 'your-domain.atlassian.net', 'TARGET', $customFields, $headers);
-```
-
-
-
----
-
 ## 🤪 Debugging and Testing in Postman
 
 To test your Jira API calls manually:
