@@ -3,6 +3,8 @@ namespace Uo\AtlassianJiraMigration\Utils;
 
 use Uo\AtlassianJiraMigration\Exception\JiraApiException;
 use CURLFile;
+use Monolog\Logger;
+use Uo\AtlassianJiraMigration\Utils\LoggerFactory;
 
 /***
  * A PHP class to interact with the Atlassian API.
@@ -17,6 +19,7 @@ use CURLFile;
 class AtlassianAPI {
     private $baseUrl;
     private $httpCode = null;
+    private Logger $log;
     
     // Common headers
     protected $headers = null;
@@ -30,8 +33,7 @@ class AtlassianAPI {
      * @param string $username The username for authentication.
      * @param string $apiToken The API token for authentication.
      */
-    public function __construct($baseUrl, $username, $apiToken) {
-        echo "Initializing Atlassian API client for $baseUrl...\n";
+    public function __construct(string $baseUrl, string $username, string $apiToken) {
         $this->baseUrl = $baseUrl;
         $auth = base64_encode("$username:$apiToken");
         $this->headers = [
@@ -44,6 +46,8 @@ class AtlassianAPI {
             "Accept: application/json",
             "X-Atlassian-Token: no-check" // Required for file uploads
         ];
+
+        $this->log = $logger ?? LoggerFactory::create('api_error');
     } 
     
     /**
@@ -51,7 +55,7 @@ class AtlassianAPI {
      *
      * @return int The HTTP status code of the most recent request.
      */
-    public function getHttpCode() {
+    public function getHttpCode(): int {
         return $this->httpCode;
     }
 
@@ -63,7 +67,7 @@ class AtlassianAPI {
      * @throws Exception If the HTTP response code is not 200 or 201.
      */
 
-    public function get($endpoint) {
+    public function get(string $endpoint): mixed {
         $url = $this->baseUrl . $endpoint;
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $this->headers);
@@ -78,6 +82,30 @@ class AtlassianAPI {
         if ($curlError) {
             throw new JiraApiException(
                 "cURL error GET $: $curlError",
+                'GET',
+                $url,
+                null,
+                $this->httpCode,
+                $response
+            );
+        }
+
+        if ($response === false) {
+            throw new JiraApiException(
+                "cURL error GET $: " . curl_error($ch),
+                'GET',
+                $url,
+                null,
+                $this->httpCode,
+                $response
+            );
+        }
+
+        //Check if the response has errors
+        if (is_array($response) && (!empty($response['errors'] || isset($response['errorMessages'])))) {
+            $errorMessage = "GET request failed with errors: " . $response['errorMessages'];
+            throw new JiraApiException(
+                $errorMessage,
                 'GET',
                 $url,
                 null,
@@ -107,9 +135,9 @@ class AtlassianAPI {
      * @return mixed The decoded JSON response from the API.
      * @throws Exception If the HTTP response code is not 200 or 201.
      */
-    public function post($endpoint, $data) {
+    public function post(string $endpoint, mixed $data): mixed {
         $url = $this->baseUrl . $endpoint;
-        $payload = json_encode($data);
+        $payload = json_encode($data, JSON_UNESCAPED_UNICODE);
         
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $this->headers);
@@ -127,7 +155,35 @@ class AtlassianAPI {
                 "cURL error GET $: $curlError",
                 'POST',
                 $url,
+                json_encode($data, JSON_UNESCAPED_UNICODE),
+                $this->httpCode,
+                $response
+            );
+        }
+
+        if ($response === false) {
+            throw new JiraApiException(
+                "cURL error POST $: " . curl_error($ch),
+                'POST',
+                $url,
                 $payload,
+                $this->httpCode,
+                $response
+            );
+        }
+
+        //Check if the response has errors
+        if (is_array($response) && (!empty($response['errors'] || isset($response['errorMessages'])))) {
+            $errorMessage = "POST request failed with errors: " . $response['errorMessages'];
+            $this->log->error($errorMessage);
+            $this->log->error($url);
+            $this->log->error($response);
+            $this->log->error($payload);
+            throw new JiraApiException(
+                $errorMessage,
+                'POST',
+                $url,
+                json_encode($data, JSON_UNESCAPED_UNICODE),
                 $this->httpCode,
                 $response
             );
@@ -138,7 +194,7 @@ class AtlassianAPI {
                 "POST request failed: HTTP code $this->httpCode",
                 'POST',
                 $url,
-                $payload,
+                json_encode($data, JSON_UNESCAPED_UNICODE),
                 $this->httpCode,
                 $response
             );
@@ -153,10 +209,9 @@ class AtlassianAPI {
      * @return mixed The decoded JSON response from the API.
      * @throws Exception If the HTTP response code is not 200 or 201.
      */
-    public function put($endpoint, $data) {
+    public function put(string $endpoint, mixed $data): mixed {
         $url = $this->baseUrl . $endpoint;
-        $payload = json_encode($data);
-        echo("\n");
+        $payload = json_encode($data, JSON_UNESCAPED_UNICODE);
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $this->headers);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
@@ -172,6 +227,29 @@ class AtlassianAPI {
                 "cURL error GET $: $curlError",
                 'PUT',
                 $url,
+                json_encode($data, JSON_UNESCAPED_UNICODE),
+                $this->httpCode,
+                $response
+            );
+        }
+
+        if ($response === false) {
+            throw new JiraApiException(
+                "cURL error PUT $: " . curl_error($ch),
+                'PUT',
+                $url,
+                json_encode($data, JSON_UNESCAPED_UNICODE),
+                $this->httpCode,
+                $response
+            );
+        }
+
+        //Check if the response has errors
+        if (is_array($response) && (!empty($response['errors'] || isset($response['errorMessages'])))) {
+            throw new JiraApiException(
+                "PUT request failed with errors: " . $response['errorMessages'],
+                'POST',
+                $url,
                 $payload,
                 $this->httpCode,
                 $response
@@ -179,8 +257,13 @@ class AtlassianAPI {
         }
         
         if ($this->httpCode !== 200 && $this->httpCode !== 201  && $this->httpCode !== 204) {
+            $errorMessage = "PUT request failed: HTTP code $this->httpCode";
+            $this->log->error($errorMessage);
+            $this->log->error($url);
+            $this->log->error($response);
+            $this->log->error($payload);
             throw new JiraApiException(
-                "PUT request failed: HTTP code $this->httpCode",
+                $errorMessage,
                 'PUT',
                 $url,
                 $payload,
@@ -200,7 +283,7 @@ class AtlassianAPI {
      * @throws Exception If the HTTP response code is not 200 or 201.
      */
 
-    public function postFile($endpoint, $filePath) {
+    public function postFile(string $endpoint, string $filePath): mixed {
         $url = $this->baseUrl . $endpoint;
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $this->headersForUpload);
@@ -224,8 +307,30 @@ class AtlassianAPI {
                 $response
             );
         }
+        if ($response === false) {
+            throw new JiraApiException(
+                "cURL error POST $: " . curl_error($ch),
+                'POST',
+                $url,
+                null,
+                $this->httpCode,
+                $response
+            );
+        }
+
+        //Check if the response has errors
+        if (is_array($response) && (!empty($response['errors'] || isset($response['errorMessages'])))) {
+            $errorMessage = "POST request failed with errors: " . $response['errorMessages'];
+            throw new JiraApiException(
+                $errorMessage,
+                'POST',
+                $url,
+                null,
+                $this->httpCode,
+                $response
+            );
+        }
         // Check if the HTTP response code is 200 or 201
-        
         if ($this->httpCode !== 200 && $this->httpCode !== 201) {
             throw new JiraApiException(
                 "PUT file request failed: HTTP code $this->httpCode",

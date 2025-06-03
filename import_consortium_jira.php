@@ -3,9 +3,9 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use Dotenv\Dotenv;
 use Monolog\Logger;
-use Monolog\Handler\StreamHandler;
 
 use Uo\AtlassianJiraMigration\Utils\AtlassianAPIEndpoints;
+use Uo\AtlassianJiraMigration\Utils\LoggerFactory;
 use Uo\AtlassianJiraMigration\Exception\JiraApiException;
 use Uo\AtlassianJiraMigration\JiraSyncProcess;
 
@@ -14,8 +14,7 @@ $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
 // Setup logger
-$log = new Logger('jira_sync');
-$log->pushHandler(new StreamHandler(__DIR__ . '/logs/app.log', Logger::DEBUG));
+$log = LoggerFactory::create('jira_sync');
 
 // Use environment variables
 $username = $_ENV['JIRA_USERNAME'];
@@ -63,6 +62,16 @@ $issueLinkTypes = [
     'QAlity Test'
 ];
 
+$options = getopt("", [
+    "key:",        // --key value1,value2,value3
+    "start:",      // --start N
+    "end:",        // --end N
+    "batches:",      // --batch N
+    "batch-size:", // --batch-size N
+    "skip-existing", // --skip-existing
+]);
+
+
 $process = new JiraSyncProcess(
     $sourceJira,
     $targetJira,
@@ -71,5 +80,43 @@ $process = new JiraSyncProcess(
     $customMap,
     $log
 );
+
+if (isset($options['skip-existing'])) {
+    echo "Skipping existing issues.\n";
+    $process->setSkipExistingIssues(true);
+} else {
+    echo "Not skipping existing issues.\n";
+}   
+
+if (isset($options['start'])) {
+    $start = (int) $options['start'];
+    echo "Running with batch size of $start.\n";
+}
+
+if (isset($options['batch-size'])) {
+    $batchSize = (int) $options['batch-size'];
+    echo "Running with batch size of $batchSize.\n";
+}
+
+if (isset($options['key'])) {
+    $keys = explode(",", $options['key']);
+    echo "Running script on specific issues: " . implode(", ", $keys) . "\n";
+} elseif (isset($options['end'])) {
+    $end = (int) $options['end'];
+    echo "Running on issues from index $start to $end.\n";
+} elseif (isset($options['batches'])) {
+    $batches = (int) $options['batches'];
+    echo "Running $batches batches.\n";
+} else {
+    echo "No valid options provided.\n";
+    echo "Usage:\n";
+    echo "  --key=ISSUE1,ISSUE2\n";
+    echo "  --start=START --end=END\n";
+    echo "  --batch=NUM\n";
+    echo "  --batch-size=SIZE\n";
+    echo "  --skip-existing\n";
+    exit(1);
+}
+
 // Start the migration process
-$process->syncIssues(0, 100);
+$process->syncIssues($start ?? 0, $end ?? null, $batches ?? null, $batchSize ?? 100, $keys ?? null);

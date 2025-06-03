@@ -1,6 +1,7 @@
 <?php
 namespace Uo\AtlassianJiraMigration\Exception;
 use Exception;
+
 /**
  * JiraApiException
  * 
@@ -69,8 +70,7 @@ class JiraApiException extends \Exception
             'method' => $this->method,
             'url' => $this->url,
             'httpCode' => $this->httpCode,
-            'payload' => $this->payload ? json_decode($this->payload, true) : null,
-            'response' => $this->response ? json_decode($this->response, true) : null,
+            'response' => $this->response ? json_decode($this->response, true) : null
         ];
     }
 }
