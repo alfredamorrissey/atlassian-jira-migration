@@ -194,6 +194,16 @@ Documentation: [Jira Workflow Documentation](https://support.atlassian.com/jira-
   ```bash
   php import_consortium_jira.php --start=0 --skip-existing
   ```  
+**You can execute your command directly with caffeinate to ensure the system stays awake for the duration of the process:**
+
+  ```bash
+  caffeinate -i php import_consortium_jira.php --start=0 --skip-existing
+  ```  
+**If you run into memory allocation errors you can you can specify a higher memory limit using the -d flag:**
+
+  ```bash
+  caffeinate -i php -d memory_limit=512M import_consortium_jira.php --start=0 --skip-existing
+  ```    
   ---
 
 ## 🤪 Debugging and Testing in Postman

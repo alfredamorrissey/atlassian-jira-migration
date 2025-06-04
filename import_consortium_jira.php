@@ -88,17 +88,17 @@ if (isset($options['skip-existing'])) {
     echo "Not skipping existing issues.\n";
 }   
 
-if (isset($options['start'])) {
-    $start = (int) $options['start'];
-    echo "Running with batch size of $start.\n";
-}
+
 
 if (isset($options['batch-size'])) {
     $batchSize = (int) $options['batch-size'];
     echo "Running with batch size of $batchSize.\n";
 }
 
-if (isset($options['key'])) {
+if (isset($options['start'])) {
+    $start = (int) $options['start'];
+    echo "Running on issues from $start onwards.\n";
+} elseif (isset($options['key'])) {
     $keys = explode(",", $options['key']);
     echo "Running script on specific issues: " . implode(", ", $keys) . "\n";
 } elseif (isset($options['end'])) {

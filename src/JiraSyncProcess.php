@@ -92,18 +92,7 @@ class JiraSyncProcess {
         $maxResults = $batchSize;
         $totalIssuesInRun = null; // Total issues to process in this run
         $fields = 'parent,project,key,summary,description,issuetype,components,status,reporter,priority,fixVersions,labels,issuelinks';
-        //If keys specified, total issue run will be the number of keys
-        if (!is_null($sourceIssueKeys)) {
-            $totalIssuesInRun = count($sourceIssueKeys);
-            
-        } 
-        else if (!is_null($end)) {
-            // If the end is specified, we will use the total issues in the project
-            $totalIssuesInRun = $end - $startAt;
-        } else if (!is_null($batches)) {
-            // If number batches are specified, we will calculate total issues in run by multiplying batches by batch size
-            $totalIssuesInRun = $batches * $batchSize;
-        }
+        $originalStart = $startAt;
         
         // Fetch issues from the source Jira project
         if (!is_null($sourceIssueKeys)) {
@@ -113,26 +102,6 @@ class JiraSyncProcess {
         }
             
         do {
-            if (empty($sourceIssueKeys)) {
-                // If no specific keys are provided, we will fetch issues based on JQL 
-                echo "Starting batch $batch out of $batches with batch size of $batchSize\n";
-            } else {
-                // If specific keys are provided, we will fetch issues based on the keys
-                echo "Starting process for keys: " . implode(',', $sourceIssueKeys) . "\n";
-            }
-            
-            // They can either specify a startAt and end, or number of batches
-            // We need to calculate number of batches based on startAt, end and batchSize
-            if (!is_null($end)) {
-                // If end is specified, calculate the number of batches
-                $totalIssues = $end - $startAt;
-                $batches = ceil($totalIssues / $batchSize);
-                if ($totalIssues < $batchSize) {
-                    $maxResults = $totalIssues; // Adjust maxResults to the remaining issues
-                }
-                echo "Total issues to process: $totalIssues " . (empty($sourceIssueKeys) ? "Number of batches: $batches" : "") . "\n";
-            }
-             
             // Add additional parameters if needed
             $params = [
                 'startAt' => $startAt,
@@ -149,19 +118,42 @@ class JiraSyncProcess {
             }
                 
             if ($data && !empty($data['issues'])) {
-                // If totalIssuesInRun isn't set, pull it from the total issues in project
-                if (is_null($totalIssuesInRun)) {
-                    $totalIssuesInRun = $data['total'];
+                $totalIssuesInProject = $data['total'];
+                
+                //If keys specified, total issue run will be the number of keys
+                if (!is_null($sourceIssueKeys)) {
+                    $totalIssuesInRun = count($sourceIssueKeys);    
+                } 
+                else if (!is_null($end)) {
+                    // If the end is specified, we will use the total issues in the project
+                    $totalIssuesInRun = $end - $originalStart;
+                    $batches = ceil($totalIssuesInRun / $batchSize);
+                } else if (!is_null($batches)) {
+                    // If number batches are specified, we will calculate total issues in run by multiplying batches by batch size
+                    $totalIssuesInRun = $batches * $batchSize;
+                } else {
+                    $totalIssuesInRun = $totalIssuesInProject - $originalStart;
+                    $batches = ceil($totalIssuesInRun / $batchSize);
                 }
+                if (empty($sourceIssueKeys)) {
+                    // If no specific keys are provided, we will fetch issues based on JQL 
+                    echo "Starting batch $batch out of $batches with batch size of $batchSize\n";
+                } else {
+                    // If specific keys are provided, we will fetch issues based on the keys
+                    echo "Starting process for keys: " . implode(',', $sourceIssueKeys) . "\n";
+                }
+
+                echo "Total issues to process: $totalIssuesInRun " . (empty($sourceIssueKeys) ? "Number of batches: $batches" : "") . "\n";
+                
                 foreach ($data['issues'] as $issue) {
                     $this->issueCount++;
                         
                     try {
-                        echo "\nProcessing issue $this->issueCount of Run Total: {$totalIssuesInRun} ";
+                        echo "\nRun Status: " . $this->issueCount . " of {$totalIssuesInRun} ";
                         // We don't need to worry about batches if we are just running a list of keys
                         if (empty($sourceIssueKeys)) {
                             // If we are no listing keys, give total issues in run
-                             echo "- Project Status: " . $startAt + $this->issueCount . " of  {$data['total']}\n";
+                             echo "- Project Status: " . $originalStart + $this->issueCount . " of  $totalIssuesInProject\n";
                         } 
                         
                         $this->syncIssue($issue);
