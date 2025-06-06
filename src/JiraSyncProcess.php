@@ -710,9 +710,9 @@ class JiraSyncProcess {
      * @param array $sourceComment The source comment data, including the author's information.
      * @return array An array representing the paragraph node with the author's name, or an empty string if no author is found.
      */
-    private function addOriginalAuthorToComment(array $sourceComment): array {
+    private function addOriginalAuthorToComment(array $sourceComment): ?array {
         $authorName = $sourceComment['author']['displayName'] ?? null;
-        $node = "";
+        $node = null;
         if (!empty($authorName)) {
             // Add the original author as a comment
             $node = [
@@ -1258,7 +1258,21 @@ class JiraSyncProcess {
     
         if (!is_array($node)) return $node;
     
-        // Handle mediaGroup specifically
+        // Flatten nested 'doc' nodes
+        if ($node['type'] === 'doc' && isset($node['content']) && is_array($node['content'])) {
+            $flattenedContent = [];
+            foreach ($node['content'] as $child) {
+                if ($child['type'] === 'doc' && isset($child['content'])) {
+                    // Merge the child 'doc' content into the parent
+                    $flattenedContent = array_merge($flattenedContent, $child['content']);
+                } else {
+                    $flattenedContent[] = $child;
+                }
+            }
+            $node['content'] = $flattenedContent;
+        }
+    
+        // Existing mediaGroup handling
         if ($node['type'] === 'mediaGroup' && isset($node['content']) && is_array($node['content'])) {
             $validMedia = [];
     
@@ -1279,7 +1293,7 @@ class JiraSyncProcess {
             // Replace mediaGroup with multiple paragraphs (one per attachment)
             return count($validMedia) === 1
                 ? $validMedia[0]
-                : ['type' => 'doc', 'content' => $validMedia]; // Or just return all
+                : ['type' => 'doc', 'content' => $validMedia];
         }
     
         // Recurse through children
@@ -1352,6 +1366,5 @@ class JiraSyncProcess {
         }
     
         return $node;
-    }
-    
+    }    
 }
