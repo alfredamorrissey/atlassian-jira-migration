@@ -12,9 +12,13 @@ use Uo\AtlassianJiraMigration\Exception\JiraApiException;
 class JiraDetectDuplicatesProcess
 {
     private AtlassianAPIEndpoints $jira;
+    private  ?Logger $log = null;
+
     private int $errorCount = 0;
     private int $issueCount = 0;
     private int $duplicateCount = 0;
+    private array $customFields;
+
 
     public function __construct(AtlassianAPIEndpoints $jira, array $customFields, ?Logger $logger = null) {
         $this->jira = $jira;
