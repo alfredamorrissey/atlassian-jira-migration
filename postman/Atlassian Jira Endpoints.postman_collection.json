@@ -1,0 +1,924 @@
+{
+	"info": {
+		"_postman_id": "1f0f72a0-491b-4305-b5ea-86570f556f7e",
+		"name": "Atlassian Jira Endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1595826",
+		"_collection_link": "https://grey-meteor-121066.postman.co/workspace/031f5cf9-29af-46ae-86ed-3cd68fa66779/collection/1595826-1f0f72a0-491b-4305-b5ea-86570f556f7e?action=share&source=collection_link&creator=1595826"
+	},
+	"item": [
+		{
+			"name": "Source Endpoints",
+			"item": [
+				{
+					"name": "Get Project Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{sourceDomain}}.atlassian.net/rest/api/3/project/{{sourceProjectKey}}",
+							"protocol": "https",
+							"host": [
+								"{{sourceDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"project",
+								"{{sourceProjectKey}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Issue Types by Project",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{sourceDomain}}.atlassian.net/rest/api/3/issuetype/project?projectId=10100",
+							"protocol": "https",
+							"host": [
+								"{{sourceDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"issuetype",
+								"project"
+							],
+							"query": [
+								{
+									"key": "projectId",
+									"value": "10100"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search ALL Issues in Project",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{sourceDomain}}.atlassian.net/rest/api/3/search?jql=project=\"{{sourceProjectKey}}\"&startAt=0&maxResults=100&fields=summary,description,issuetype,components,status,reporter,assignee,priority,fixIssue",
+							"protocol": "https",
+							"host": [
+								"{{sourceDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"search"
+							],
+							"query": [
+								{
+									"key": "jql",
+									"value": "project=\"{{sourceProjectKey}}\""
+								},
+								{
+									"key": "startAt",
+									"value": "0"
+								},
+								{
+									"key": "maxResults",
+									"value": "100"
+								},
+								{
+									"key": "fields",
+									"value": "summary,description,issuetype,components,status,reporter,assignee,priority,fixIssue"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Issue by Key",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{sourceDomain}}.atlassian.net/rest/api/3/issue/ME-10590",
+							"protocol": "https",
+							"host": [
+								"{{sourceDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"issue",
+								"ME-10590"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Issue Comments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{sourceDomain}}.atlassian.net/rest/api/3/issue/ME-10573/comment",
+							"protocol": "https",
+							"host": [
+								"{{sourceDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"issue",
+								"ME-10573",
+								"comment"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search issues By Project",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{sourceDomain}}.atlassian.net/rest/api/3/search?jql=project={{sourceProjectKey}}&startAt=0&maxResults=1&fields=summary%2Cdescription%2Cissuetype%2Ccomponents%2Cstatus%2Creporter%2Cpriority%2CfixVersions%2Clabels",
+							"protocol": "https",
+							"host": [
+								"{{sourceDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"search"
+							],
+							"query": [
+								{
+									"key": "jql",
+									"value": "project={{sourceProjectKey}}"
+								},
+								{
+									"key": "startAt",
+									"value": "0"
+								},
+								{
+									"key": "maxResults",
+									"value": "1"
+								},
+								{
+									"key": "fields",
+									"value": "summary%2Cdescription%2Cissuetype%2Ccomponents%2Cstatus%2Creporter%2Cpriority%2CfixVersions%2Clabels"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Editable Fields for Issue",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{sourceDomain}}.atlassian.net/rest/api/3/issue/ME-2204/editmeta",
+							"protocol": "https",
+							"host": [
+								"{{sourceDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"issue",
+								"ME-2204",
+								"editmeta"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Issue Link Types by Project",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{sourceDomain}}.atlassian.net/rest/api/3/issueLinkType",
+							"protocol": "https",
+							"host": [
+								"{{sourceDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"issueLinkType"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Issues with Attachments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{sourceDomain}}.atlassian.net/rest/api/3/search?jql=project=\"{{sourceProjectKey}}\" AND attachments IS NOT EMPTY&startAt=0&maxResults=100&fields=attachment",
+							"protocol": "https",
+							"host": [
+								"{{sourceDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"search"
+							],
+							"query": [
+								{
+									"key": "jql",
+									"value": "project=\"{{sourceProjectKey}}\" AND attachments IS NOT EMPTY"
+								},
+								{
+									"key": "startAt",
+									"value": "0"
+								},
+								{
+									"key": "maxResults",
+									"value": "100"
+								},
+								{
+									"key": "fields",
+									"value": "attachment"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Issues with Linked Issues",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{sourceDomain}}.atlassian.net/rest/api/3/search?jql=project=\"{{sourceProjectKey}}\" AND issueLinkType IS NOT EMPTY&startAt=0&maxResults=100&fields=key,summary,issuelinks",
+							"protocol": "https",
+							"host": [
+								"{{sourceDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"search"
+							],
+							"query": [
+								{
+									"key": "jql",
+									"value": "project=\"{{sourceProjectKey}}\" AND issueLinkType IS NOT EMPTY"
+								},
+								{
+									"key": "startAt",
+									"value": "0"
+								},
+								{
+									"key": "maxResults",
+									"value": "100"
+								},
+								{
+									"key": "fields",
+									"value": "key,summary,issuelinks"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Issues with Fix Version",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{sourceDomain}}.atlassian.net/rest/api/3/search?jql=project=\"{{sourceProjectKey}}\" AND fixVersion IS NOT EMPTY&startAt=0&maxResults=100&fields=key,summary,fixVersions",
+							"protocol": "https",
+							"host": [
+								"{{sourceDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"search"
+							],
+							"query": [
+								{
+									"key": "jql",
+									"value": "project=\"{{sourceProjectKey}}\" AND fixVersion IS NOT EMPTY"
+								},
+								{
+									"key": "startAt",
+									"value": "0"
+								},
+								{
+									"key": "maxResults",
+									"value": "100"
+								},
+								{
+									"key": "fields",
+									"value": "key,summary,fixVersions"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "TARGET Endpoints",
+			"item": [
+				{
+					"name": "Get Project Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{targetDomain}}.atlassian.net/rest/api/3/project/{{targetProjectKey}}",
+							"protocol": "https",
+							"host": [
+								"{{targetDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"project",
+								"{{targetProjectKey}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Issue Types by Project Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{targetDomain}}.atlassian.net/rest/api/3/issuetype/project?projectId=13678",
+							"protocol": "https",
+							"host": [
+								"{{targetDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"issuetype",
+								"project"
+							],
+							"query": [
+								{
+									"key": "projectId",
+									"value": "13678"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search ALL Issues in Project",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{targetDomain}}.atlassian.net/rest/api/3/search?jql=project = \"{{targetProjectKey}}\"&startAt=0&maxResults=100&fields=parent,project,key,summary,description,issuetype,components,status,reporter,priority,fixVersions,labels,issuelinks",
+							"protocol": "https",
+							"host": [
+								"{{targetDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"search"
+							],
+							"query": [
+								{
+									"key": "jql",
+									"value": "project = \"{{targetProjectKey}}\""
+								},
+								{
+									"key": "startAt",
+									"value": "0"
+								},
+								{
+									"key": "maxResults",
+									"value": "100"
+								},
+								{
+									"key": "fields",
+									"value": "parent,project,key,summary,description,issuetype,components,status,reporter,priority,fixVersions,labels,issuelinks"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Issues with Linked Issues",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{targetDomain}}.atlassian.net/rest/api/3/search?jql=project=\"{{targetProjectKey}}\" AND issueLinkType IS NOT EMPTY&startAt=0&maxResults=100&fields=key,summary,issuelinks",
+							"protocol": "https",
+							"host": [
+								"{{targetDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"search"
+							],
+							"query": [
+								{
+									"key": "jql",
+									"value": "project=\"{{targetProjectKey}}\" AND issueLinkType IS NOT EMPTY"
+								},
+								{
+									"key": "startAt",
+									"value": "0"
+								},
+								{
+									"key": "maxResults",
+									"value": "100"
+								},
+								{
+									"key": "fields",
+									"value": "key,summary,issuelinks"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get issue by key",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{targetDomain}}.atlassian.net/rest/api/3/issue/ETCD-516",
+							"protocol": "https",
+							"host": [
+								"{{targetDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"issue",
+								"ETCD-516"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Editable Fields for Issue Key",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{targetDomain}}.atlassian.net/rest/api/3/issue/ETCD-1335/editmeta",
+							"protocol": "https",
+							"host": [
+								"{{targetDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"issue",
+								"ETCD-1335",
+								"editmeta"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Issue Link Types",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{targetDomain}}.atlassian.net/rest/api/3/issueLinkType",
+							"protocol": "https",
+							"host": [
+								"{{targetDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"issueLinkType"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search by Original Jira ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{targetDomain}}.atlassian.net/rest/api/3/search?jql=project=\"{{targetProjectKey}}\" AND cf[{{originalJiraCustomField}}] ~ \"ME-2679\"&fields=key",
+							"protocol": "https",
+							"host": [
+								"{{targetDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"search"
+							],
+							"query": [
+								{
+									"key": "jql",
+									"value": "project=\"{{targetProjectKey}}\" AND cf[{{originalJiraCustomField}}] ~ \"ME-2679\""
+								},
+								{
+									"key": "fields",
+									"value": "key"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search For issues with attachments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{targetDomain}}.atlassian.net/rest/api/3/search?jql=project=\"{{targetProjectKey}}\" AND attachments IS NOT EMPTY&startAt=0&maxResults=100",
+							"protocol": "https",
+							"host": [
+								"{{targetDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"search"
+							],
+							"query": [
+								{
+									"key": "jql",
+									"value": "project=\"{{targetProjectKey}}\" AND attachments IS NOT EMPTY"
+								},
+								{
+									"key": "startAt",
+									"value": "0"
+								},
+								{
+									"key": "maxResults",
+									"value": "100"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Comment to issue",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"body\": {\n        \"type\": \"doc\",\n        \"version\": 1,\n        \"content\": [\n            {\n                \"type\": \"heading\",\n                \"attrs\": {\n                    \"level\": 2\n                },\n                \"content\": [\n                    {\n                        \"type\": \"text\",\n                        \"text\": \"Before uploading a new version:\"\n                    }\n                ]\n            },\n            {\n                \"type\": \"paragraph\",\n                \"content\": [\n                    {\n                        \"type\": \"text\",\n                        \"text\": \"Used: \"\n                    },\n                    {\n                        \"type\": \"text\",\n                        \"text\": \"  \"\n                    }\n                ]\n            },\n            {\n                \"type\": \"paragraph\",\n                \"content\": [\n                    {\n                        \"type\": \"text\",\n                        \"text\": \"Current CBE Tables:\"\n                    }\n                ]\n            },\n            {\n                \"type\": \"paragraph\",\n                \"content\": [\n                    {\n                        \"type\": \"text\",\n                        \"text\": \"image-20240718-133632.png\",\n                        \"marks\": [\n                            {\n                                \"type\": \"link\",\n                                \"attrs\": {\n                                    \"href\": \"https:\\/\\/uottawa.atlassian.net\\/rest\\/api\\/3\\/attachment\\/content\\/125666\"\n                                }\n                            }\n                        ]\n                    }\n                ]\n            },\n            {\n                \"type\": \"paragraph\",\n                \"content\": [\n                    {\n                        \"type\": \"text\",\n                        \"text\": \"There is no user tree present. \"\n                    }\n                ]\n            },\n            {\n                \"type\": \"heading\",\n                \"attrs\": {\n                    \"level\": 3\n                },\n                \"content\": [\n                    {\n                        \"type\": \"text\",\n                        \"text\": \"Users\"\n                    }\n                ]\n            },\n            {\n                \"type\": \"table\",\n                \"attrs\": {\n                    \"isNumberColumnEnabled\": false,\n                    \"layout\": \"default\",\n                    \"localId\": \"ef6d248b-041c-47c5-857f-63405627f75b\"\n                },\n                \"content\": [\n                    {\n                        \"type\": \"tableRow\",\n                        \"content\": [\n                            {\n                                \"type\": \"tableHeader\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"First Name\",\n                                                \"marks\": [\n                                                    {\n                                                        \"type\": \"strong\"\n                                                    }\n                                                ]\n                                            }\n                                        ]\n                                    }\n                                ]\n                            },\n                            {\n                                \"type\": \"tableHeader\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"Last Name\",\n                                                \"marks\": [\n                                                    {\n                                                        \"type\": \"strong\"\n                                                    }\n                                                ]\n                                            }\n                                        ]\n                                    }\n                                ]\n                            },\n                            {\n                                \"type\": \"tableHeader\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"Almonds\"\n                                            }\n                                        ]\n                                    }\n                                ]\n                            },\n                            {\n                                \"type\": \"tableHeader\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"Asparagus\"\n                                            }\n                                        ]\n                                    }\n                                ]\n                            }\n                        ]\n                    },\n                    {\n                        \"type\": \"tableRow\",\n                        \"content\": [\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"Atkins\",\n                                                \"marks\": [\n                                                    {\n                                                        \"type\": \"link\",\n                                                        \"attrs\": {\n                                                            \"href\": \"http:\\/\\/elentra-1x-me.localhost\\/people?profile=Izzyatkins\"\n                                                        }\n                                                    }\n                                                ]\n                                            }\n                                        ]\n                                    }\n                                ]\n                            },\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"Izzy\",\n                                                \"marks\": [\n                                                    {\n                                                        \"type\": \"link\",\n                                                        \"attrs\": {\n                                                            \"href\": \"http:\\/\\/elentra-1x-me.localhost\\/people?profile=Izzyatkins\"\n                                                        }\n                                                    }\n                                                ]\n                                            }\n                                        ]\n                                    }\n                                ]\n                            },\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"Completed \"\n                                            }\n                                        ]\n                                    }\n                                ]\n                            },\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"To-Do\"\n                                            }\n                                        ]\n                                    }\n                                ]\n                            }\n                        ]\n                    },\n                    {\n                        \"type\": \"tableRow\",\n                        \"content\": [\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"Banks\",\n                                                \"marks\": [\n                                                    {\n                                                        \"type\": \"link\",\n                                                        \"attrs\": {\n                                                            \"href\": \"http:\\/\\/elentra-1x-me.localhost\\/people?profile=user202729\"\n                                                        }\n                                                    }\n                                                ]\n                                            }\n                                        ]\n                                    }\n                                ]\n                            },\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"Christian\",\n                                                \"marks\": [\n                                                    {\n                                                        \"type\": \"link\",\n                                                        \"attrs\": {\n                                                            \"href\": \"http:\\/\\/elentra-1x-me.localhost\\/people?profile=user202729\"\n                                                        }\n                                                    }\n                                                ]\n                                            }\n                                        ]\n                                    }\n                                ]\n                            },\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"To-Do\"\n                                            }\n                                        ]\n                                    }\n                                ]\n                            },\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"To-Do\"\n                                            }\n                                        ]\n                                    }\n                                ]\n                            }\n                        ]\n                    },\n                    {\n                        \"type\": \"tableRow\",\n                        \"content\": [\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"Butler\",\n                                                \"marks\": [\n                                                    {\n                                                        \"type\": \"link\",\n                                                        \"attrs\": {\n                                                            \"href\": \"http:\\/\\/elentra-1x-me.localhost\\/people?profile=user202736\"\n                                                        }\n                                                    }\n                                                ]\n                                            }\n                                        ]\n                                    }\n                                ]\n                            },\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"Dima\",\n                                                \"marks\": [\n                                                    {\n                                                        \"type\": \"link\",\n                                                        \"attrs\": {\n                                                            \"href\": \"http:\\/\\/elentra-1x-me.localhost\\/people?profile=user202736\"\n                                                        }\n                                                    }\n                                                ]\n                                            }\n                                        ]\n                                    }\n                                ]\n                            },\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"In-Progress\"\n                                            }\n                                        ]\n                                    }\n                                ]\n                            },\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"To-Do\"\n                                            }\n                                        ]\n                                    }\n                                ]\n                            }\n                        ]\n                    },\n                    {\n                        \"type\": \"tableRow\",\n                        \"content\": [\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"Chandler\",\n                                                \"marks\": [\n                                                    {\n                                                        \"type\": \"link\",\n                                                        \"attrs\": {\n                                                            \"href\": \"http:\\/\\/elentra-1x-me.localhost\\/people?profile=user202733\"\n                                                        }\n                                                    }\n                                                ]\n                                            }\n                                        ]\n                                    }\n                                ]\n                            },\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"Basia\",\n                                                \"marks\": [\n                                                    {\n                                                        \"type\": \"link\",\n                                                        \"attrs\": {\n                                                            \"href\": \"http:\\/\\/elentra-1x-me.localhost\\/people?profile=user202733\"\n                                                        }\n                                                    }\n                                                ]\n                                            }\n                                        ]\n                                    }\n                                ]\n                            },\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"Completed \"\n                                            }\n                                        ]\n                                    }\n                                ]\n                            },\n                            {\n                                \"type\": \"tableCell\",\n                                \"attrs\": [],\n                                \"content\": [\n                                    {\n                                        \"type\": \"paragraph\",\n                                        \"content\": [\n                                            {\n                                                \"type\": \"text\",\n                                                \"text\": \"Completed \"\n                                            }\n                                        ]\n                                    }\n                                ]\n                            }\n                        ]\n                    }\n                ]\n            },\n            \n            {\n                \"type\": \"paragraph\",\n                \"content\": [\n                    {\n                        \"type\": \"hardBreak\"\n                    },\n                    {\n                        \"type\": \"text\",\n                        \"text\": \"Expected:\"\n                    }\n                ]\n            },\n            {\n                \"type\": \"bulletList\",\n                \"content\": [\n                    {\n                        \"type\": \"listItem\",\n                        \"content\": [\n                            {\n                                \"type\": \"paragraph\",\n                                \"content\": [\n                                    {\n                                        \"type\": \"text\",\n                                        \"text\": \"Users are given a dedicated user tree\"\n                                    }\n                                ]\n                            }\n                        ]\n                    }\n                ]\n            },\n            {\n                \"type\": \"paragraph\",\n                \"content\": [\n                    {\n                        \"type\": \"text\",\n                        \"text\": \"Expected outcome: \"\n                    },\n                    {\n                        \"type\": \"text\",\n                        \"text\": \" \"\n                    }\n                ]\n            },\n            {\n                \"type\": \"heading\",\n                \"attrs\": {\n                    \"level\": 3\n                },\n                \"content\": [\n                    {\n                        \"type\": \"text\",\n                        \"text\": \"Outcome:\"\n                    }\n                ]\n            },\n            {\n                \"type\": \"paragraph\",\n                \"content\": [\n                    {\n                        \"type\": \"text\",\n                        \"text\": \"image-20240718-150924.png\",\n                        \"marks\": [\n                            {\n                                \"type\": \"link\",\n                                \"attrs\": {\n                                    \"href\": \"https:\\/\\/uottawa.atlassian.net\\/rest\\/api\\/3\\/attachment\\/content\\/125667\"\n                                }\n                            }\n                        ]\n                    }\n                ]\n            },\n            {\n                \"type\": \"paragraph\",\n                \"content\": [\n                    {\n                        \"type\": \"text\",\n                        \"text\": \"The four CBME users now have a user tree\"\n                    }\n                ]\n            },\n            {\n                \"type\": \"paragraph\",\n                \"content\": [\n                    {\n                        \"type\": \"text\",\n                        \"text\": \" I made changes to the code to ensure that it’s compatbilie with PHP 8.0. Can you please check my changes. If it looks good then please move to “Ready to merge”, if there are  changes then move to “in testing”. \"\n                    }\n                ]\n            },\n            {\n                \"type\": \"paragraph\",\n                \"content\": [\n                    {\n                        \"type\": \"text\",\n                        \"text\": \"(Originally commented by Graham Berry)\"\n                    }\n                ]\n            }\n        ]\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{targetDomain}}.atlassian.net/rest/api/3/issue/ETCD-1714/comment",
+							"protocol": "https",
+							"host": [
+								"{{targetDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"issue",
+								"ETCD-1714",
+								"comment"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Issue",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fields\": {\n        \"summary\": \"ME-10332: Improper row number when validating character limit\",\n        \"customfield_12385\": \"ME-10332\",\n        \"description\": {\n            \"type\": \"doc\",\n            \"version\": 1,\n            \"content\": [\n                {\n                    \"type\": \"paragraph\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"Improper row number when validating character limit\"\n                        }\n                    ]\n                }\n            ]\n        },\n        \"customfield_12419\": [\n            \"CBE\"\n        ],\n        \"customfield_12421\": [\n            \"1.25.3\",\n            \"1.26.2\",\n            \"1.27.1\",\n            \"1.28.0\"\n        ],\n        \"priority\": {\n            \"name\": \"Medium\"\n        },\n        \"labels\": [\n            \"Product\"\n        ],\n        \"customfield_12422\": \"Graham Berry\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{targetDomain}}.atlassian.net/rest/api/3/issue/ETCD-766",
+							"protocol": "https",
+							"host": [
+								"{{targetDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"issue",
+								"ETCD-766"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Issue",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fields\": {\n    \"project\": {\n      \"key\": \"ETCD\"\n    },\n    \"summary\": \"ME-10549: As an Assessment Form Builder, I want the system to auto disable \\\"Forward Task\\\" and \\\"Reopen Task\\\" options when enabling the Final Grades option\",\n    \"issuetype\": {\n      \"name\": \"Subtask\"\n    },\n    \"customfield_12385\": \"ME-10549\",\n    \"customfield_12419\": [\n      \"Assessment--Evaluation-Distributions--Rotation-Schedule\"\n    ],\n    \"labels\": [\n      \"WUSM\"\n    ],\n    \"customfield_12422\": \"Jason Crustals\",\n    \"parent\": {\n      \"key\": \"ETCD-559\"\n    }\n  }\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{targetDomain}}.atlassian.net/rest/api/3/issue/",
+							"protocol": "https",
+							"host": [
+								"{{targetDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"issue",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Link Issue",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fields\": {\n        \"project\": {\n            \"key\": \"ETCD\"\n        },\n        \"summary\": \"Error shown when accessing a published form templates\",\n        \"issuetype\": {\n            \"name\": \"Bug\"\n        },\n        \"customfield_12385\": \"ME-10573\",\n        \"description\": {\n            \"type\": \"doc\",\n            \"version\": 1,\n            \"content\": [\n                {\n                    \"type\": \"paragraph\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"Summary:\",\n                            \"marks\": [\n                                {\n                                    \"type\": \"strong\"\n                                }\n                            ]\n                        },\n                        {\n                            \"type\": \"hardBreak\"\n                        },\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"Published CBE  form templates are currently inaccessible due to an \"\n                        },\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"invalid database constraint\",\n                            \"marks\": [\n                                {\n                                    \"type\": \"strong\"\n                                }\n                            ]\n                        },\n                        {\n                            \"type\": \"text\",\n                            \"text\": \" error when attempting to retrieve data.\"\n                        }\n                    ]\n                },\n                {\n                    \"type\": \"rule\"\n                },\n                {\n                    \"type\": \"paragraph\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"Description:\",\n                            \"marks\": [\n                                {\n                                    \"type\": \"strong\"\n                                }\n                            ]\n                        },\n                        {\n                            \"type\": \"hardBreak\"\n                        },\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"An error occurs when accessing published \"\n                        },\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"CBE form templates\",\n                            \"marks\": [\n                                {\n                                    \"type\": \"strong\"\n                                }\n                            ]\n                        },\n                        {\n                            \"type\": \"text\",\n                            \"text\": \", preventing users from editing or viewing them. The error message indicates an \"\n                        },\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"invalid constraint key\",\n                            \"marks\": [\n                                {\n                                    \"type\": \"strong\"\n                                }\n                            ]\n                        },\n                        {\n                            \"type\": \"text\",\n                            \"text\": \" in the \"\n                        },\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"Models Assessments Form PromptedResponseReviewerType\",\n                            \"marks\": [\n                                {\n                                    \"type\": \"code\"\n                                }\n                            ]\n                        },\n                        {\n                            \"type\": \"text\",\n                            \"text\": \" model.\"\n                        }\n                    ]\n                },\n                {\n                    \"type\": \"rule\"\n                },\n                {\n                    \"type\": \"paragraph\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"Steps to Reproduce:\",\n                            \"marks\": [\n                                {\n                                    \"type\": \"strong\"\n                                }\n                            ]\n                        }\n                    ]\n                },\n                {\n                    \"type\": \"orderedList\",\n                    \"attrs\": {\n                        \"order\": 1\n                    },\n                    \"content\": [\n                        {\n                            \"type\": \"listItem\",\n                            \"content\": [\n                                {\n                                    \"type\": \"paragraph\",\n                                    \"content\": [\n                                        {\n                                            \"type\": \"text\",\n                                            \"text\": \"Navigate to \"\n                                        },\n                                        {\n                                            \"type\": \"text\",\n                                            \"text\": \"Assessment & Evaluation \\u2192 Form Templates\",\n                                            \"marks\": [\n                                                {\n                                                    \"type\": \"strong\"\n                                                }\n                                            ]\n                                        },\n                                        {\n                                            \"type\": \"text\",\n                                            \"text\": \".\"\n                                        }\n                                    ]\n                                }\n                            ]\n                        },\n                        {\n                            \"type\": \"listItem\",\n                            \"content\": [\n                                {\n                                    \"type\": \"paragraph\",\n                                    \"content\": [\n                                        {\n                                            \"type\": \"text\",\n                                            \"text\": \"Select any \"\n                                        },\n                                        {\n                                            \"type\": \"text\",\n                                            \"text\": \"published\",\n                                            \"marks\": [\n                                                {\n                                                    \"type\": \"strong\"\n                                                }\n                                            ]\n                                        },\n                                        {\n                                            \"type\": \"text\",\n                                            \"text\": \" form template.\"\n                                        }\n                                    ]\n                                }\n                            ]\n                        },\n                        {\n                            \"type\": \"listItem\",\n                            \"content\": [\n                                {\n                                    \"type\": \"paragraph\",\n                                    \"content\": [\n                                        {\n                                            \"type\": \"text\",\n                                            \"text\": \"Observe that the page fails to load and displays a system error message.\"\n                                        }\n                                    ]\n                                },\n                                {\n                                    \"type\": \"paragraph\",\n                                    \"content\": [\n                                        {\n                                            \"type\": \"inlineCard\",\n                                            \"attrs\": {\n                                                \"url\": \"https:\\/\\/pmc.portainer.elentra.dev\\/admin\\/assessments\\/blueprints?section=edit-blueprint&form_blueprint_id=27\"\n                                            }\n                                        },\n                                        {\n                                            \"type\": \"text\",\n                                            \"text\": \" \"\n                                        }\n                                    ]\n                                }\n                            ]\n                        }\n                    ]\n                },\n                {\n                    \"type\": \"rule\"\n                },\n                {\n                    \"type\": \"paragraph\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"Expected Behavior:\",\n                            \"marks\": [\n                                {\n                                    \"type\": \"strong\"\n                                }\n                            ]\n                        },\n                        {\n                            \"type\": \"hardBreak\"\n                        },\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"Published \"\n                        },\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"CBE form templates\",\n                            \"marks\": [\n                                {\n                                    \"type\": \"strong\"\n                                }\n                            ]\n                        },\n                        {\n                            \"type\": \"text\",\n                            \"text\": \" should be accessible without constraint key errors.\"\n                        }\n                    ]\n                },\n                {\n                    \"type\": \"rule\"\n                },\n                {\n                    \"type\": \"paragraph\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"Actual Behavior:\",\n                            \"marks\": [\n                                {\n                                    \"type\": \"strong\"\n                                }\n                            ]\n                        }\n                    ]\n                }\n            ]\n        },\n        \"customfield_12419\": [\n            \"Assessment & Evaluation\"\n        ],\n        \"customfield_12421\": [\n            \"1.28.0\"\n        ],\n        \"labels\": [\n            \"Technical\"\n        ],\n        \"customfield_12422\": \"hussam alzahabi\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{targetDomain}}.atlassian.net/rest/api/3/issue/",
+							"protocol": "https",
+							"host": [
+								"{{targetDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"issue",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Comments for issue",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{targetDomain}}.atlassian.net/rest/api/3/issue/ETCD-516/comment",
+							"protocol": "https",
+							"host": [
+								"{{targetDomain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"api",
+								"3",
+								"issue",
+								"ETCD-516",
+								"comment"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "password",
+				"value": "{{vault:JIRA_API_KEY}}",
+				"type": "string"
+			},
+			{
+				"key": "username",
+				"value": "{{username}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "username",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "sourceProjectKey",
+			"value": "ME",
+			"type": "default"
+		},
+		{
+			"key": "targetProjectKey",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "sourceDomain",
+			"value": "elentra",
+			"type": "default"
+		},
+		{
+			"key": "targetDomain",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "originalJiraCustomField",
+			"value": "",
+			"type": "default"
+		}
+	]
+}

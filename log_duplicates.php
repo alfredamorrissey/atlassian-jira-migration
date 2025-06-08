@@ -7,37 +7,20 @@ use Monolog\Logger;
 use Uo\AtlassianJiraMigration\Utils\AtlassianAPIEndpoints;
 use Uo\AtlassianJiraMigration\Utils\LoggerFactory;
 use Uo\AtlassianJiraMigration\Exception\JiraApiException;
-use Uo\AtlassianJiraMigration\JiraSyncProcess;
+use Uo\AtlassianJiraMigration\JiraDetectDuplicatesProcess;
 
 // Load environment variables
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
 // Setup logger
-$log = LoggerFactory::create('jira_sync');
+$log = LoggerFactory::create('find_duplicates');
 
 // Use environment variables
 $username = $_ENV['JIRA_USERNAME'];
 $token = $_ENV['JIRA_API_TOKEN'];
-
-$sourceProjectKey = $_ENV['SOURCE_PROJECT_KEY'];
-$targetProjectKey = $_ENV['TARGET_PROJECT_KEY'];
-
-$sourceDomain = $_ENV['SOURCE_JIRA_DOMAIN'];
 $targetDomain = $_ENV['TARGET_JIRA_DOMAIN'];
-
-try {
-    $sourceJira = new AtlassianAPIEndpoints($sourceDomain, $username, $token, $sourceProjectKey);
-    $targetJira = new AtlassianAPIEndpoints($targetDomain, $username, $token, $targetProjectKey);
- } catch (JiraApiException $e) {
-    echo "Error initializing Jira API: " . $e->getMessage() . "\n";
-    var_dump ($e->toContextArray());
-    exit(1);
- }
-
-
-$issueTypeMap = json_decode(getenv('JIRA_TYPE_MAPPING'), true) ?? [];
-$issueLinkTypeMap = json_decode(getenv('JIRA_LINK_TYPE_MAPPING'), true) ?? [];
+$targetProjectKey = $_ENV['TARGET_PROJECT_KEY'];
 
 
 // Custom fields mapping
@@ -50,32 +33,20 @@ $customFields = [
 ];
 
 $options = getopt("", [
-    "key:",        // --key value1,value2,value3
     "start:",      // --start N
     "end:",        // --end N
     "batches:",      // --batch N
     "batch-size:", // --batch-size N
-    "skip-existing", // --skip-existing
 ]);
 
-
-$process = new JiraSyncProcess(
-    $sourceJira,
-    $targetJira,
-    $customFields,
-    $issueTypeMap,
-    $issueLinkTypeMap,
-    $log
-);
-
-if (isset($options['skip-existing'])) {
-    echo "Skipping existing issues.\n";
-    $process->setSkipExistingIssues(true);
-} else {
-    echo "Not skipping existing issues.\n";
-}   
-
-
+try {
+    $targetJira = new AtlassianAPIEndpoints($targetDomain, $username, $token, $targetProjectKey);
+    $process = new JiraDetectDuplicatesProcess($targetJira, $customFields, $log);
+} catch (JiraApiException $e) {
+    echo "Error initializing Jira API: " . $e->getMessage() . "\n";
+    var_dump ($e->toContextArray());
+    exit(1);
+}
 
 if (isset($options['batch-size'])) {
     $batchSize = (int) $options['batch-size'];
@@ -109,4 +80,4 @@ else {
 }
 
 // Start the migration process
-$process->syncIssues($start ?? 0, $end ?? null, $batches ?? null, $batchSize ?? 100, $keys ?? null);
+$process->processIssues($start ?? 0, $end ?? null, $batches ?? null, $batchSize ?? 100, $keys ?? null);

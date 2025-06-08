@@ -7,6 +7,7 @@ use Exception;
 use Monolog\Logger;
 
 use Uo\AtlassianJiraMigration\Utils\AtlassianAPIEndpoints;
+use Uo\AtlassianJiraMigration\Utils\ADFSanitizer;
 use Uo\AtlassianJiraMigration\Utils\LoggerFactory;
 use Uo\AtlassianJiraMigration\Exception\JiraApiException;
 
@@ -20,8 +21,9 @@ use Uo\AtlassianJiraMigration\Exception\JiraApiException;
 class JiraSyncProcess {
     private AtlassianAPIEndpoints $sourceJira;
     private AtlassianAPIEndpoints $targetJira;
+    private ADFSanitizer $sanitizer;
     private array $customFields;
-    private array $issueLinkTypes;
+    private array $issueLinkTypeMap;
     private array $issueTypeMap = [];
     private bool $skipExistingIssues = false; // Flag to skip existing issues in the target project
     // Logger instance
@@ -46,18 +48,19 @@ class JiraSyncProcess {
      * @param AtlassianAPIEndpoints $sourceJira The source Jira API endpoint.
      * @param AtlassianAPIEndpoints $targetJira The target Jira API endpoint.
      * @param array $customFields An associative array of custom field mappings.
-     * @param array $issueLinkTypes An array of issue link types to be processed.
-     * @param array $customMap A map of custom issue types for synchronization.
+     * @param array $issueTypeMap An map of custom issue link types.
+     * @param array $issueTypeMap A map of custom issue types for synchronization.
      * @param Logger|null $logger An optional logger instance for logging activities.
      */
-    public function __construct(AtlassianAPIEndpoints $sourceJira, AtlassianAPIEndpoints $targetJira, array $customFields, array $issueLinkTypes, array $customMap, ?Logger $logger = null) {
+    public function __construct(AtlassianAPIEndpoints $sourceJira, AtlassianAPIEndpoints $targetJira, array $customFields, array $customMap, array $issueLinkTypeMap, ?Logger $logger = null) {
         $this->sourceJira = $sourceJira;
         $this->targetJira = $targetJira;
         $this->customFields = $customFields;
-        $this->issueLinkTypes = $issueLinkTypes;
+        $this->issueLinkTypeMap = $issueLinkTypeMap;
         $this->issueTypeMap = $this->mapIssueTypes($targetJira->getIssueTypes(), $sourceJira->getIssueTypes(), $customMap);
         // Initialize logger if provided
         $this->log = $logger ?? LoggerFactory::create();
+        $this->sanitizer = new ADFSanitizer();
     }
 
     /**
@@ -96,10 +99,11 @@ class JiraSyncProcess {
         
         // Fetch issues from the source Jira project
         if (!is_null($sourceIssueKeys)) {
-            $jql = "project = \"{$this->sourceJira->getProjectKey()}\" AND key IN (" . implode(',', array_map(fn($key) => "\"$key\"", $sourceIssueKeys)) . ")";
+            $jql = "key IN (" . implode(',', array_map(fn($key) => "\"$key\"", $sourceIssueKeys)) . ")";
         } else {
             $jql = "project = \"{$this->sourceJira->getProjectKey()}\"";
         }
+        echo $jql . "\n";
             
         do {
             // Add additional parameters if needed
@@ -147,6 +151,9 @@ class JiraSyncProcess {
                 
                 foreach ($data['issues'] as $issue) {
                     $this->issueCount++;
+                    if (!is_null($end) && $this->issueCount > $end) {
+                        break;
+                    }
                         
                     try {
                         echo "\nRun Status: " . $this->issueCount . " of {$totalIssuesInRun} ";
@@ -183,17 +190,36 @@ class JiraSyncProcess {
                 echo "Processed issues from keys: " . implode(', ', $sourceIssueKeys) . "\n";
             }
             echo 'Updated issues: ' . $this->updateCount . ', Created issues: ' . $this->createCount . "\n";
-            echo "Time taken: " . (microtime(true) - $startTime) . " seconds OR " . (microtime(true) - $startTime)/60 . " minutes\n";
+            echo "Duration: " . $this->formatDuration(microtime(true) - $startTime) . "\n";
             echo "\n\n##########################################\n\n";
             
         } while ($startAt < $data['total'] && $batch <= $batches && (is_null($end) || $startAt < $end)); 
         // If we reach here, we have processed all issues
         echo "Total issues processed: $this->issueCount with $this->errorCount errors out of Total Project Issues: {$data['total']}\n";
         echo 'Updated issues: ' . $this->updateCount . ', Created issues: ' . $this->createCount . "\n";
-        echo "Time taken: " . (microtime(true) - $startTime) . " seconds OR " . (microtime(true) - $startTime)/60 . " minutes\n";
+        echo "Duration: " . $this->formatDuration(microtime(true) - $startTime) . "\n";
             
-    }  
-    
+    }
+
+    function formatDuration(int|float $seconds): string {
+        $seconds = (int) $seconds;
+        $hours = intdiv($seconds, 3600);
+        $minutes = intdiv($seconds % 3600, 60);
+        $seconds = $seconds % 60;
+        $parts = [];
+        if ($hours > 0) {
+            $parts[] = "{$hours}h";
+        }
+        if ($minutes > 0) {
+            $parts[] = "{$minutes}m";
+        }
+        if ($seconds > 0 || empty($parts)) {
+            $parts[] = "{$seconds}s";
+        }
+        return implode(' ', $parts);
+    }
+
+
     /******************* Issue Creation and Update Methods *******************/
 
     /**
@@ -300,12 +326,21 @@ class JiraSyncProcess {
     
         if (!empty($description) && is_array($description)) {
             $sanitized = $this->sanitizeADF($description, $sourceIssue, $targetIssueKey);
-            $finalAdf = $this->validateFinalADF($sanitized);
-            if (!empty($finalAdf['content'])) {
-                $payload['fields']['description'] = $finalAdf;
+            if (!empty($sanitized)) {
+                $finalAdf = $this->sanitizer->validateFinalADF($sanitized);
+                if (!empty($finalAdf['content'])) {
+                    $payload['fields']['description'] = $finalAdf;
+                } else {
+                    $this->log->info("Sanitized ADF has no content for {$sourceIssue['key']}", [
+                        'sanitized' => json_encode($sanitized)
+                    ]);
+                }
             } else {
-                $this->log->info("Skipping empty ADF description for {$sourceIssue['key']}");
+                $this->log->info("Sanitized ADF is empty for {$sourceIssue['key']}", [
+                    'rawDescription' => json_encode($description)
+                ]);
             }
+
         }
     
         return $payload;
@@ -473,51 +508,64 @@ class JiraSyncProcess {
      * @param string $targetIssueKey The key of the target issue to sync comments with.
      */
     private function syncComments(array $sourceIssue, string $targetIssueKey): void {
-        // If the target issue already has comments, skip syncing
         $targetComments = $this->targetJira->getIssueComments($targetIssueKey);
         if (!empty($targetComments)) {
             return;
         }
 
         $comments = $this->sourceJira->getIssueComments($sourceIssue['key']) ?? [];
-        
+
         foreach ($comments as $comment) {
             $body = $comment['body'] ?? null;
-    
+
             if (!empty($body) && is_array($body)) {
                 $sanitized = $this->sanitizeADF($body, $sourceIssue, $targetIssueKey);
-                $finalAdf = $this->validateFinalADF($sanitized);
-                // Only create a comment if the sanitized content is not empty
-                if (!empty($sanitized['content'])) {
-                    
-                    $finalAdf['content'][] = $this->addOriginalAuthorToComment($comment);
-            
-                    try {
-                        $this->targetJira->createIssueComment($targetIssueKey, ['body' => $finalAdf]);
-                    } catch (JiraApiException $e) {
-                        $this->log->warning("Falling back to text for comment: {$targetIssueKey} - {$e->getMessage()}", $e->toContextArray());
-                        $body['content'][] = $this->addOriginalAuthorToComment($comment);
-                        $fallback = $this->adfToPlainText($body); // original body
-                        $this->targetJira->createIssueComment($targetIssueKey, [
-                            'body' => [
-                                'type' => 'doc',
-                                'version' => 1,
-                                'content' => [[
-                                    'type' => 'paragraph',
+
+                if (!empty($sanitized)) {
+                    $finalAdf = $this->sanitizer->validateFinalADF($sanitized);
+
+                    if (!empty($finalAdf['content'])) {
+                        $finalAdf['content'][] = $this->addOriginalAuthorToComment($comment);
+
+                        try {
+                            $this->targetJira->createIssueComment($targetIssueKey, ['body' => $finalAdf]);
+                        } catch (JiraApiException $e) {
+                            $this->log->warning("Falling back to text for comment: {$targetIssueKey} - {$e->getMessage()}", $e->toContextArray());
+                            $body['content'][] = $this->addOriginalAuthorToComment($comment);
+                            $fallback = $this->sanitizer->adfToPlainText($body);
+
+                            $this->targetJira->createIssueComment($targetIssueKey, [
+                                'body' => [
+                                    'type' => 'doc',
+                                    'version' => 1,
                                     'content' => [[
-                                        'type' => 'text',
-                                        'text' => $fallback,
+                                        'type' => 'paragraph',
+                                        'content' => [[
+                                            'type' => 'text',
+                                            'text' => $fallback,
+                                        ]],
                                     ]],
-                                ]],
-                            ]
+                                ]
+                            ]);
+                        }
+                    } else {
+                        $this->log->info("Sanitized comment has no content for {$sourceIssue['key']}", [
+                            'commentId' => $comment['id'] ?? 'unknown',
+                            'sanitized' => json_encode($sanitized),
                         ]);
                     }
+                } else {
+                    $this->log->info("Sanitized comment is empty for {$sourceIssue['key']}", [
+                        'commentId' => $comment['id'] ?? 'unknown',
+                        'rawBody' => json_encode($body),
+                    ]);
                 }
             }
         }
     }
-    
-    
+
+
+
     /**
      * Syncs attachments from the source issue to the target issue.
      *
@@ -567,11 +615,8 @@ class JiraSyncProcess {
         if (isset($sourceIssue['fields']['issuelinks']) && !empty($sourceIssue['fields']['issuelinks'])) {
             foreach ($sourceIssue['fields']['issuelinks'] as $link) {
                 $linkType = $link['type']['name'] ?? null;
-                //Check that link type is defined and is either 'relates to' or 'blocks'
-                if (!$linkType || !in_array($linkType, $this->issueLinkTypes)) {
-                    echo "Link type is missing for issue: {$sourceIssue['key']}\n";
-                    continue; // Skip this link if the type is not defined
-                }
+                //Convert link type from source to a target friendly type default to Relates
+                $linkType = $this->issueLinkTypeMap[$linkType] ?? "Relates";
                 // Get the linked issue key
                 // Check if the link is outward or inward
                 // Jira API returns links in two formats: outwardIssue and inwardIssue
@@ -599,7 +644,7 @@ class JiraSyncProcess {
                 } 
                 // Check if the link already exists in the target issue
                 if (!$this->getIssueLinkByKey($targetLinkKey, $targetLinks)) {
-                    $this->targetJira->linkIssueByKey($targetIssueKey, $targetLinkKey, $link['type']['name']);
+                    $this->targetJira->linkIssueByKey($targetIssueKey, $targetLinkKey, $linkType);
                 } 
             }
         } 
@@ -768,14 +813,14 @@ class JiraSyncProcess {
      * @param array $node The ADF node to be sanitized.
      * @param array $sourceIssue The source Jira issue containing the node.
      * @param string $targetIssueKey The key of the target Jira issue.
-     * @return array The sanitized ADF node.
+     * @return array The sanitized ADF node or null if its empty.
      */
-     private function sanitizeADF(array $node, array $sourceIssue, string $targetIssueKey): array {
+     private function sanitizeADF(array $node, array $sourceIssue, string $targetIssueKey): ?array {
         // Step 1: Upload and transform attachments (presumably handles image nodes)
         $withUploads = $this->uploadAttachmentsFromADF($node, $sourceIssue, $targetIssueKey);
-    
         // Step 2: Sanitize and flatten
-        return $this->flattenADF($withUploads);
+        //return $this->flattenADF($withUploads);!empty($withUploads)) {}
+         return empty($withUploads) ? $withUploads : $this->sanitizer->sanitize($withUploads);
     }
 
     /**
@@ -794,299 +839,6 @@ class JiraSyncProcess {
         }
         return $summary;
     }
-    
-    /**
-     * Flatten an ADF node into a valid Jira document.
-     *
-     * This function processes an ADF node by performing the following steps:
-     * 1. Wraps the node in a valid ADF document structure.
-     * 2. Flattens the node structure to prevent issues caused by excessive nesting depth.
-     *
-     * @param array $adf The ADF node to be flattened.
-     * @param int $depth The current depth of the node structure.
-     * @return array The flattened ADF node.
-     */
-    private function flattenADF(array $adf, int $depth = 0): array {
-        if (!isset($adf['type']) || $adf['type'] !== 'doc') {
-            $adf = [
-                'type' => 'doc',
-                'version' => 1,
-                'content' => [$adf],
-            ];
-        }
-    
-        $content = $this->flattenADFContent($adf['content'] ?? [], $depth);
-        if (empty($content)) {
-            $content = [[
-                'type' => 'paragraph',
-                'content' => [[
-                    'type' => 'text',
-                    'text' => '[No valid content preserved]',
-                ]]
-            ]];
-        }
-    
-        return [
-            'type' => 'doc',
-            'version' => 1,
-            'content' => $content,
-        ];
-    }
-    
-    
-    /**
-     * Flattens an ADF node's content array to prevent issues caused by excessive nesting depth.
-     *
-     * This function processes an ADF node's content array by performing the following steps:
-     * 1. Truncates the content if it exceeds a maximum nesting depth of 8.
-     * 2. Skips empty or invalid paragraphs.
-     * 3. Removes unsupported nodes.
-     * 4. Fixes mentions by dropping them if they are missing required attributes.
-     * 5. Sanitizes each remaining node using the `sanitizeADFNode` method.
-     *
-     * @param array $nodes The ADF node's content array to be flattened.
-     * @param int $depth The current depth of the node structure.
-     * @return array The flattened ADF node's content array.
-     */
-    private function flattenADFContent(array $nodes, int $depth): array {
-        if ($depth > 8) {
-            return [[
-                'type' => 'paragraph',
-                'content' => [[
-                    'type' => 'text',
-                    'text' => '[Content truncated due to excessive nesting]',
-                ]],
-            ]];
-        }
-    
-        $flattened = [];
-        foreach ($nodes as $node) {
-            // Skip empty or content arrays
-            if (in_array($node['type'], ['paragraph', 'listItem', 'bulletList', 'orderedList', 'panel', 'mediaGroup'])
-                && isset($node['content']) && empty($node['content'])) {
-                continue;
-            }
-    
-            // Remove unsupported nodes
-            if (in_array($node['type'], ['inlineCard', 'emoji'])) {
-                continue;
-            }
-    
-            // Fix mentions: drop if missing required attrs
-            if ($node['type'] === 'mention') {
-                $attrs = $node['attrs'] ?? [];
-                if (!isset($attrs['userType']) || !isset($attrs['accessLevel'])) {
-                    continue;
-                }
-            }
-    
-            if (!is_array($node) || !isset($node['type'])) {
-                continue;
-            }
-            
-            try {
-                $sanitized = $this->sanitizeADFNode($node, $depth);
-                if (isset($sanitized['type'])) {
-                    $flattened[] = $sanitized;
-                }
-            } catch (Exception $e) {
-                $this->log->warning("Skipping malformed ADF node during flatten", ['node' => $node, 'error' => $e->getMessage()]);
-            }
-        }
-    
-        return $flattened;
-    }
-
-    /**
-     * Validates a final ADF node, ensuring it is ready to be sent to Jira.
-     *
-     * This function processes a final ADF node by performing the following steps:
-     * 1. Skips empty or invalid nodes.
-     * 2. Ensures 'content' is an array, or removes it if not.
-     * 3. Recursively validates content.
-     * 4. Skips malformed 'marks'.
-     * 5. Removes empty 'attrs' unless required.
-     *
-     * @param array $node The ADF node to be validated.
-     * @return array|null The validated ADF node, or null if it is not valid.
-     */
-    private function validateFinalADF(array $node): ?array {
-        if (!is_array($node) || !isset($node['type'])) {
-            return null;
-        }
-    
-        // Force 'content' to be an array if present, or remove if invalid
-        if (isset($node['content']) && !is_array($node['content'])) {
-            unset($node['content']);
-        }
-    
-        // Validate content recursively
-        if (isset($node['content']) && is_array($node['content'])) {
-            $node['content'] = array_values(array_filter(array_map(
-                fn($child) => $this->validateFinalADF($child),
-                $node['content']
-            )));
-        }
-    
-        // Strip marks if malformed
-        if (isset($node['marks']) && !is_array($node['marks'])) {
-            unset($node['marks']);
-        }
-    
-        // Strip empty attrs unless it's required
-        if (isset($node['attrs']) && !is_array($node['attrs'])) {
-            unset($node['attrs']);
-        }
-    
-        return $node;
-    }
-    
-    
-    /**
-     * Sanitizes an ADF node, ensuring it has a valid format.
-     *
-     * - Ensures 'attrs' is an object, not an empty array (for tables, table rows, table cells, and table headers).
-     * - Removes empty 'attrs' property.
-     * - Keeps only valid 'marks'.
-     * - Sanitizes nested content:
-     *   - For table cells, flattens content to a single paragraph.
-     *   - For other nodes, flattens content recursively.
-     * - Downgrades invalid nodes inside a table to a paragraph.
-     * - Only retains allowed ADF keys.
-     *
-     * @param array $node The ADF node.
-     * @param int $depth The current depth of the node structure.
-     * @return array The sanitized ADF node.
-     */
-    private function sanitizeADFNode(array $node, int $depth): array {
-        // Fix: Ensure attrs is an object, not an empty array
-        if (in_array($node['type'], ['table', 'tableRow', 'tableCell', 'tableHeader'])) {
-            if (is_array($node['attrs'] ?? null) && empty($node['attrs'])) {
-                unset($node['attrs']); // remove empty attrs
-            }
-        }
-
-        // Sanitize nested content
-        if (isset($node['content']) && is_array($node['content'])) {
-            if (in_array($node['type'], ['tableHeader', 'tableCell'])) {
-                $node['content'] = $this->sanitizeTableCellContent($node['content'], $depth + 1);
-            } else {
-                $node['content'] = $this->flattenADFContent($node['content'], $depth + 1);
-            }
-        }
-    
-        // Sanitize Paragraphs
-        if ($node['type'] === 'paragraph' && isset($node['content']) && is_array($node['content'])) {
-            $node['content'] = $this->sanitizeParagraphContent($node['content']);
-        }
-    
-        // Keep only valid marks
-        if (isset($node['marks']) && is_array($node['marks'])) {
-            $node['marks'] = array_values(array_filter($node['marks'], function ($mark) {
-                return is_array($mark) && isset($mark['type']) && is_string($mark['type']);
-            }));
-        }
-    
-        // Downgrade invalid nodes inside table
-        if ($depth >= 2 && in_array($node['type'], ['heading']) && $this->isParentTableCellContext($depth)) {
-            $node['type'] = 'paragraph';
-            unset($node['attrs']);
-        }
-    
-        // Only retain allowed ADF keys
-        $allowedKeys = ['type', 'content', 'text', 'marks', 'attrs'];
-        return array_intersect_key($node, array_flip($allowedKeys));
-    }
-    
-
-    /**
-     * Sanitizes a paragraph node by flattening any nested paragraphs.
-     *
-     * Recursively traverses the content of a paragraph node and flattens any
-     * nested paragraph nodes. This prevents nested paragraphs from being
-     * inserted into the Jira issue.
-     *
-     * @param array $node The paragraph node to be sanitized.
-     * @return array The sanitized paragraph node.
-     */
-    private function sanitizeParagraphContent(array $content): array {
-        $flattened = [];
-    
-        foreach ($content as $child) {
-            if (is_array($child) && ($child['type'] ?? null) === 'paragraph') {
-                $innerContent = $child['content'] ?? [];
-                // Recursively sanitize nested content
-                $flattened = array_merge($flattened, $this->sanitizeParagraphContent($innerContent));
-            } else {
-                $flattened[] = $child;
-            }
-        }
-    
-        return $flattened;
-    }
-    
-    /**
-     * Sanitizes the content of a table cell.
-     * 
-     * Sanitizes the content of a table cell by flattening the content and downgrading any headings to paragraphs.
-     * 
-     * @param array $content The content of the table cell.
-     * @param int $depth The current depth of the node structure.
-     * @return array The sanitized content of the table cell.
-     */
-    private function sanitizeTableCellContent(array $content, int $depth): array {
-        $sanitized = [];
-    
-        foreach ($content as $child) {
-            if (isset($child['type']) && strpos($child['type'], 'heading') === 0) {
-                $sanitized[] = [
-                    'type' => 'paragraph',
-                    'content' => isset($child['content']) ? $this->flattenADFContent($child['content'], $depth + 1) : [],
-                ];
-            } else {
-                $sanitized[] = $this->sanitizeADFNode($child, $depth);
-            }
-        }
-    
-        return $sanitized;
-    }
-    
-    /**
-     * Determines if the context is a table cell by checking if the current depth is >= 2.
-     * 
-     * @param int $depth The current depth of the node structure.
-     * @return bool True if the context is a table cell; false otherwise.
-     */
-    private function isParentTableCellContext(int $depth): bool {
-        return $depth >= 2;
-    }
-
-    /**
-     * Extracts the plain text from an ADF node.
-     *
-     * This method recursively traverses the ADF node structure and concatenates the text of each node into a single string.
-     *
-     * @param array $adf The ADF node to extract the plain text from.
-     * @return string The plain text from the ADF node.
-     */
-    private function adfToPlainText(array $adf): string {
-        $text = '';
-    
-        $extractText = function ($nodes) use (&$extractText, &$text) {
-            foreach ($nodes as $node) {
-                if (isset($node['text'])) {
-                    $text .= $node['text'];
-                }
-                if (isset($node['content'])) {
-                    $extractText($node['content']);
-                    $text .= "\n";
-                }
-            }
-        };
-    
-        $extractText($adf['content'] ?? []);
-        return trim($text);
-    }       
 
     /**
      * Sanitizes a label string by removing special characters and replacing spaces with hyphens.
@@ -1253,73 +1005,48 @@ class JiraSyncProcess {
      * @param string $targetIssueKey The target issue key
      * @return array The modified ADF node
      */
-    private function uploadAttachmentsFromADF(array $node, array $sourceIssue, string $targetIssueKey): array {
+    private function uploadAttachmentsFromADF(array $node, array $sourceIssue, string $targetIssueKey): ?array {
         global $log;
-    
-        if (!is_array($node)) return $node;
-    
-        // Flatten nested 'doc' nodes
-        if ($node['type'] === 'doc' && isset($node['content']) && is_array($node['content'])) {
-            $flattenedContent = [];
-            foreach ($node['content'] as $child) {
-                if ($child['type'] === 'doc' && isset($child['content'])) {
-                    // Merge the child 'doc' content into the parent
-                    $flattenedContent = array_merge($flattenedContent, $child['content']);
-                } else {
-                    $flattenedContent[] = $child;
-                }
-            }
-            $node['content'] = $flattenedContent;
-        }
-    
-        // Existing mediaGroup handling
-        if ($node['type'] === 'mediaGroup' && isset($node['content']) && is_array($node['content'])) {
-            $validMedia = [];
-    
-            foreach ($node['content'] as $child) {
-                if ($child['type'] === 'media') {
-                    $converted = $this->uploadAttachmentsFromADF($child, $sourceIssue, $targetIssueKey);
+
+        if (!$node || !is_array($node)) return null;
+
+        // Replace mediaGroup with flattened media
+        if ($node['type'] === 'mediaGroup' && isset($node['content'])) {
+            $mediaParagraphs = [];
+            foreach ($node['content'] as $mediaNode) {
+                if ($mediaNode['type'] === 'media') {
+                    $converted = $this->uploadAttachmentsFromADF($mediaNode, $sourceIssue, $targetIssueKey);
                     if ($converted) {
-                        $validMedia[] = $converted;
+                        $mediaParagraphs[] = $converted;
                     }
                 } else {
                     $log->warning("Removing invalid child from mediaGroup", [
-                        'childType' => $child['type'],
-                        'node' => $child
+                        'childType' => $mediaNode['type'],
+                        'node' => $mediaNode
                     ]);
                 }
             }
-    
-            // Replace mediaGroup with multiple paragraphs (one per attachment)
-            return count($validMedia) === 1
-                ? $validMedia[0]
-                : ['type' => 'doc', 'content' => $validMedia];
-        }
-    
-        // Recurse through children
-        if (isset($node['content']) && is_array($node['content'])) {
-            $filtered = array_map(function ($child) use ($sourceIssue, $targetIssueKey) {
-                return $this->uploadAttachmentsFromADF($child, $sourceIssue, $targetIssueKey);
-            }, $node['content']);
-            $node['content'] = array_values(array_filter($filtered));
-    
-            // Unwrap invalid mediaSingle
-            if ($node['type'] === 'mediaSingle' && count($node['content']) === 1 && $node['content'][0]['type'] === 'paragraph') {
-                return $node['content'][0];
+
+            if (empty($mediaParagraphs)) {
+                return null;
             }
+
+            return count($mediaParagraphs) === 1
+                ? $mediaParagraphs[0]
+                : ['type' => 'doc', 'content' => $mediaParagraphs];
         }
-    
+
         // Replace media node with paragraph containing a link
         if ($node['type'] === 'media') {
             $filename = $node['attrs']['alt'] ?? null;
             $mediaId = $node['attrs']['id'] ?? null;
-    
+
             $attachment = !empty($filename)
-                ? $this->sourceJira->getIssueAttachmentByFileName($sourceIssue["key"], $filename)
+                ? $this->sourceJira->getIssueAttachmentByFileName($sourceIssue['key'], $filename)
                 : null;
-    
+
             $attachmentUrl = $attachment['content'] ?? null;
-    
+
             if (empty($attachmentUrl) || empty($filename)) {
                 $log->warning("Skipping media node: missing URL or filename.", [
                     'issueKey' => $sourceIssue['key'],
@@ -1332,17 +1059,17 @@ class JiraSyncProcess {
                     'type' => 'paragraph',
                     'content' => [[
                         'type' => 'text',
-                        'text' => $filename ?? $mediaId ?? 'Attachment missing',
+                        'text' => $filename ?? $mediaId ?? 'Attachment missing'
                     ]]
                 ];
             }
-    
-            $href = $filename;
+
             try {
                 $uploaded = $this->uploadAttachment($targetIssueKey, $attachmentUrl, $filename);
                 $href = $uploaded['content'] ?? $filename;
             } catch (JiraApiException $e) {
                 $log->error("Failed to upload attachment: {$filename} for issue {$sourceIssue['key']}: " . $e->getMessage(), $e->toContextArray());
+                $href = $filename;
             } catch (Exception $e) {
                 $log->error("Unexpected error uploading attachment: {$filename} for issue {$sourceIssue['key']}: " . $e->getMessage(), [
                     'issueKey' => $sourceIssue['key'],
@@ -1350,8 +1077,9 @@ class JiraSyncProcess {
                     'attachmentUrl' => $attachmentUrl,
                     'node' => $node
                 ]);
+                $href = $filename;
             }
-    
+
             return [
                 'type' => 'paragraph',
                 'content' => [[
@@ -1364,7 +1092,29 @@ class JiraSyncProcess {
                 ]]
             ];
         }
-    
+
+        // Recurse through children
+        if (!empty($node['content'])) {
+            $node['content'] = array_values(array_filter(array_map(
+                fn($child) => $this->uploadAttachmentsFromADF($child, $sourceIssue, $targetIssueKey),
+                $node['content']
+            )));
+
+            // Optional: unwrap mediaSingle if its only content is a paragraph
+            if ($node['type'] === 'mediaSingle' && count($node['content']) === 1 && $node['content'][0]['type'] === 'paragraph') {
+                return $node['content'][0];
+            }
+
+            if (empty($node['content'])) {
+                return null;
+            }
+        }
+
+        // Final cleanup before return
+        if (empty($node['content']) && !in_array($node['type'], ['text', 'codeBlock'])) {
+            return null;
+        }
+
         return $node;
-    }    
+    }
 }

@@ -190,8 +190,13 @@ class AtlassianAPI {
         }
         
         if ($this->httpCode !== 200 && $this->httpCode !== 201  && $this->httpCode !== 204) {
+            $errorMessage = "POST request failed: HTTP code $this->httpCode";
+            $this->log->error($errorMessage);
+            $this->log->error($url);
+            $this->log->error($response);
+            $this->log->error($payload);
             throw new JiraApiException(
-                "POST request failed: HTTP code $this->httpCode",
+                $errorMessage,
                 'POST',
                 $url,
                 json_encode($data, JSON_UNESCAPED_UNICODE),
