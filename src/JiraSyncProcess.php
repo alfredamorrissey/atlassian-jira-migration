@@ -257,7 +257,9 @@ class JiraSyncProcess {
             if ($isSubtask && strtolower($parentType) === 'epic') {
                 $issueTypeName = 'Task';
             }
-        } 
+        } else if ($isSubtask) {
+            $issueTypeName = 'Task';
+        }
 
         // Translate type via map if defined
         $mappedType = $this->issueTypeMap[$issueTypeName] ?? $issueTypeName;
@@ -833,6 +835,9 @@ class JiraSyncProcess {
     private function sanitizeSummary(array $sourceIssue): string {
         //Append the original issue key to the summary
         $summary = $sourceIssue['key'] . ": " . $sourceIssue['fields']['summary'];
+        //Remove newlines
+        $summary = preg_replace('/\s+/', ' ', $summary);
+        $summary = trim($summary);
         //truncate if too long
         if (strlen($summary) > self::SUMMARY_MAX_LENGTH) {
             $summary = substr($summary, 0, self::SUMMARY_MAX_LENGTH - 3) . '...';

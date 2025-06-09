@@ -84,21 +84,25 @@ class ADFSanitizer
         return trim($text);
     }
 
-    public function sanitize(array $node, int $depth = 0): ?array
+    public function sanitize(array $node, int $depth = 0, bool $inListItemContext = false): ?array
     {
         if ($depth > self::MAX_DEPTH || !isset($node['type']) || !in_array($node['type'], self::ALLOWED_TYPES)) {
             return null;
         }
 
-        // Remove empty attrs from table structures
+        // Remove empty attrs from table structures or non-associative ones
+        if (isset($node['attrs']) && (!is_array($node['attrs']) || array_values($node['attrs']) === $node['attrs'])) {
+            unset($node['attrs']);
+        }
+
         if (in_array($node['type'], ['table', 'tableRow', 'tableCell', 'tableHeader']) &&
             is_array($node['attrs'] ?? null) && empty($node['attrs'])) {
             unset($node['attrs']);
         }
 
-        // Sanitize and flatten content
+        // Sanitize content
         if (isset($node['content']) && is_array($node['content'])) {
-            // Flatten any nested `type: doc` nodes directly
+            // Flatten any nested `type: doc` nodes
             $flattenedContent = [];
             foreach ($node['content'] as $child) {
                 if (is_array($child) && ($child['type'] ?? '') === 'doc' && isset($child['content']) && is_array($child['content'])) {
@@ -111,35 +115,28 @@ class ADFSanitizer
             }
             $node['content'] = $flattenedContent;
 
-            // Now sanitize the content recursively
-            if (in_array($node['type'], ['tableCell', 'tableHeader'])) {
+            if ($node['type'] === 'tableCell' || $node['type'] === 'tableHeader') {
                 $node['content'] = $this->sanitizeTableCellContent($node['content'], $depth + 1);
-
-                // 🛠 Ensure at least one paragraph exists (even empty) to preserve table structure
                 if (empty($node['content'])) {
-                    $node['content'] = [
-                        [
-                            'type' => 'paragraph',
-                            'content' => []
-                        ]
-                    ];
+                    $node['content'] = [[ 'type' => 'paragraph', 'content' => [] ]];
                 }
-            }
-
-            if ($node['type'] === 'listItem') {
-                $node['content'] = $this->fixListItemContent($node['content']);
-            }
-
-            if ($node['type'] === 'paragraph') {
+            } elseif ($node['type'] === 'listItem') {
+                $node['content'] = $this->fixListItemContent($node['content'], $depth + 1);
+            } elseif ($node['type'] === 'paragraph') {
                 $node['content'] = $this->sanitizeParagraphContent($node['content']);
+            } else {
+                $node['content'] = array_values(array_filter(array_map(
+                    fn($child) => $this->sanitize($child, $depth + 1, $node['type'] === 'listItem'),
+                    $node['content']
+                )));
             }
         }
 
-        // Keep only valid marks
+        // Strip invalid marks
         if (isset($node['marks']) && is_array($node['marks'])) {
-            $node['marks'] = array_values(array_filter($node['marks'], function ($mark) {
-                return is_array($mark) && isset($mark['type']) && is_string($mark['type']);
-            }));
+            $node['marks'] = array_values(array_filter($node['marks'], fn($mark) =>
+                is_array($mark) && isset($mark['type']) && is_string($mark['type'])
+            ));
         }
 
         // Convert heading to paragraph inside table cells
@@ -148,7 +145,7 @@ class ADFSanitizer
             unset($node['attrs']);
         }
 
-        // Drop empty or invalid nodes
+        // Drop meaningless content
         if ($node['type'] === 'paragraph' && empty($node['content'])) {
             return null;
         }
@@ -159,11 +156,9 @@ class ADFSanitizer
             return null;
         }
 
-        // Final prune
         $allowedKeys = ['type', 'content', 'text', 'marks', 'attrs', 'version'];
         return array_intersect_key($node, array_flip($allowedKeys));
     }
-
 
     private function flattenADFContent(array $content, int $depth): array
     {
@@ -210,17 +205,28 @@ class ADFSanitizer
         return $sanitized;
     }
 
-    private function fixListItemContent(array $content): array
+    private function fixListItemContent(array $content, int $depth): array
     {
         $paragraphs = [];
         $lists = [];
 
         foreach ($content as $item) {
-            if (in_array($item['type'], ['bulletList', 'orderedList'])) {
-                $lists[] = $item;
-            } else {
-                $paragraphs[] = $item;
+            if (!is_array($item) || !isset($item['type'])) {
+                continue;
             }
+
+            if (in_array($item['type'], ['bulletList', 'orderedList'])) {
+                $sanitizedList = $this->sanitize($item, $depth + 1);
+                if ($sanitizedList !== null) {
+                    $lists[] = $sanitizedList;
+                }
+            } elseif ($item['type'] === 'paragraph') {
+                $sanitizedParagraph = $this->sanitize($item, $depth + 1);
+                if ($sanitizedParagraph !== null) {
+                    $paragraphs[] = $sanitizedParagraph;
+                }
+            }
+            // Drop anything else like bare listItems or invalid blocks
         }
 
         if (empty($paragraphs)) {
